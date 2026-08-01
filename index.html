@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitación para Fiorella</title>
+    <style>
+        /* Fuentes y Reset */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Outfit:wght@400;600;800&family=Satisfy&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            
+            /* FONDO ARMÓNICO: Degradado oscuro con movimiento y luz central */
+            background: linear-gradient(135deg, #0a0a12 0%, #1a1035 50%, #0a1628 100%);
+            background-size: 200% 200%;
+            animation: bgShift 10s ease infinite;
+            color: #ffffff;
+        }
+
+        /* Luz envolvente suave en el centro */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 40%, rgba(108, 92, 231, 0.15), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes bgShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            text-align: center;
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            margin: 30px 20px 30px 20px;
+            position: relative;
+            z-index: 1;
+            /* Sombra suave para leer sobre el fondo, sin fosforecer */
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            line-height: 1.3;
+        }
+
+        /* Colores de juego para cada palabra del título */
+        .color-1 { color: #00d4ff; } /* Cyan */
+        .color-2 { color: #ffe66d; } /* Amarillo */
+        .color-3 { color: #ff3399; } /* Rosa */
+        .color-4 { color: #39ff14; } /* Verde Lima */
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 480px; 
+            width: 90%;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            aspect-ratio: 1 / 1; 
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .card:hover {
+            transform: scale(1.1) !important;
+            z-index: 10;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .card.revealed {
+            background: rgba(10, 10, 18, 0.9) !important;
+            backdrop-filter: blur(4px);
+            border-color: rgba(255,255,255,0.2);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-shadow: none !important; 
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .word {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-weight: 800;
+            color: #ffffff; 
+            padding: 5px;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: scale(0.5) rotate(-10deg);
+            transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+            z-index: 3;
+            line-height: 1.1;
+        }
+
+        .card.revealed img { opacity: 0; transform: scale(1.5) rotate(10deg); }
+        .card.revealed .word { opacity: 1; transform: scale(1) rotate(0deg); }
+
+        /* ========================================== */
+        /* PANTALLA FINAL (MÁQUINA DE NO SCROLLEO)   */
+        /* ========================================== */
+        #final-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            /* dvh (Dynamic Viewport Height) evita el scroll en móviles modernos */
+            height: 100vh;
+            height: 100dvh; 
+            overflow: hidden; /* PROHIBIDO SCROLLEAR */
+            background: rgba(10, 10, 18, 0.97);
+            backdrop-filter: blur(20px);
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+            padding: 15px;
+        }
+
+        #final-screen.show {
+            display: flex;
+            animation: fadeIn 0.8s ease;
+        }
+
+        /* Ocupa todo el alto disponible y empuja cosas proporcionalmente */
+        #options-phase {
+            display: flex;
+            flex-direction: column;
+            height: 90%;
+            width: 100%;
+            max-width: 420px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #options-phase h2 {
+            font-family: 'Fredoka One', cursive;
+            color: #ffffff;
+            font-size: clamp(1.3rem, 5vw, 2rem);
+            margin-bottom: 15px;
+            flex-shrink: 0; /* Que el título no se encoja */
+        }
+
+        .options-container {
+            flex: 1; /* Toma el espacio restante */
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            min-height: 0; /* Clave para que flex no haga scroll */
+        }
+
+        .place-card {
+            flex: 1; /* Se reparte el 50% del espacio para cada tarjeta */
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+            min-height: 0; /* Clave para que las imágenes se adapten */
+        }
+
+        .place-card:hover {
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        /* La imagen se adapta al espacio sobrante sin romper nada */
+        .place-img {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            object-fit: cover;
+        }
+
+        .place-info {
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.3);
+            flex-shrink: 0; /* Los botones no se hacen diminutos */
+        }
+
+        .place-info h3 {
+            font-family: 'Fredoka One', cursive;
+            color: #ffffff;
+            margin: 0;
+            font-size: clamp(0.9rem, 3vw, 1.3rem);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .insta-btn, .wa-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 50px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .insta-btn {
+            background: linear-gradient(45deg, #f09433, #dc2743, #bc1888);
+            box-shadow: 0 4px 10px rgba(220, 39, 67, 0.4);
+        }
+
+        .wa-btn {
+            background: #25D366; 
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);
+            cursor: pointer;
+        }
+
+        .insta-btn:hover, .wa-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        .footer-text {
+            margin-top: 15px;
+            font-family: 'Satisfy', cursive; 
+            color: #ffffff; 
+            font-size: clamp(1.4rem, 4vw, 2rem); 
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.6); 
+            flex-shrink: 0;
+        }
+
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Título con colores de juego, sin fosforecer -->
+    <h1>
+        <span class="color-1">Fiorella,</span> 
+        <span class="color-2">mira</span> 
+        <span class="color-3">los</span> 
+        <span class="color-4">gatitos</span> 🐾
+    </h1>
+
+    <div id="grid-container"></div>
+
+    <div id="final-screen">
+        <div id="options-phase">
+            <h2>¿A dónde vamos? 🎉</h2>
+            
+            <div class="options-container">
+                <!-- OPCIÓN 1: MR JOY -->
+                <div class="place-card">
+                    <img src="img/A.jpg" alt="Mr Joy" class="place-img">
+                    <div class="place-info">
+                        <h3>Mr Joy</h3>
+                        <div class="btn-group">
+                            <a href="https://www.instagram.com/mrjoyec/" target="_blank" class="insta-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                Instagram
+                            </a>
+                            <a class="wa-btn" onclick="notificar('Mr Joy')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Notificar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OPCIÓN 2: ICEBERG -->
+                <div class="place-card">
+                    <img src="img/B.jpg" alt="Iceberg" class="place-img">
+                    <div class="place-info">
+                        <h3>Iceberg Family Fun</h3>
+                        <div class="btn-group">
+                            <a href="https://www.instagram.com/icebergecuador/" target="_blank" class="insta-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                Instagram
+                            </a>
+                            <a class="wa-btn" onclick="notificar('Iceberg Family Fun Center')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Notificar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-text">Invitación hecha por Andrés 💙</p>
+    </div>
+
+    <script>
+        const palabras = [
+            "Los", "gatitos", "no", "solo", "se", "besan,",
+            "no", "solo", "se", "abrazan,", "¡tampoco", "solo",
+            "pelean!", "¡También", "juegan!", "Y", "como",
+            "quiero", "jugar", "contigo,", "te", "invito", "a...",
+            "Elegir 👇"
+        ];
+
+        const coloresNeon = [
+            '#FF0055', '#00FF88', '#FFD700', '#00D4FF', 
+            '#FF6600', '#B400FF', '#FF3399', '#00FFCC',
+            '#FF0000', '#39FF14', '#FFAA00', '#0080FF',
+            '#FF1493', '#00FFFF', '#FF4500', '#8A2BE2',
+            '#FFFF00', '#DC143C', '#32CD32', '#4169E1',
+            '#FF7F50', '#9400D3', '#7FFF00', '#FF69B4'
+        ];
+
+        const numeroAndres = '593986092411';
+
+        const grid = document.getElementById('grid-container');
+        const finalScreen = document.getElementById('final-screen');
+        
+        let clickCount = 0;
+
+        for (let i = 1; i <= 24; i++) {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.onclick = () => revealCard(card);
+
+            const colorNeon = coloresNeon[Math.floor(Math.random() * coloresNeon.length)];
+            card.style.backgroundColor = colorNeon;
+            card.style.boxShadow = `0 0 15px ${colorNeon}80, 0 0 5px ${colorNeon}`;
+
+            const retrasoFlotacion = (Math.random() * 2).toFixed(2);
+            card.style.animationDelay = `${retrasoFlotacion}s`;
+
+            const img = document.createElement('img');
+            img.src = `img/${i}.jpg`; 
+            img.alt = `Gatito ${i}`;
+            img.loading = "lazy";
+
+            const wordDiv = document.createElement('div');
+            wordDiv.classList.add('word');
+            wordDiv.textContent = palabras[i - 1];
+
+            card.appendChild(img);
+            card.appendChild(wordDiv);
+            grid.appendChild(card);
+        }
+
+        function revealCard(card) {
+            if (card.classList.contains('revealed')) return;
+
+            card.classList.add('revealed');
+            clickCount++;
+
+            if (clickCount === 24) {
+                setTimeout(() => {
+                    finalScreen.classList.add('show');
+                }, 800);
+            }
+        }
+
+        function notificar(lugar) {
+            const mensaje = encodeURIComponent(`¡Andrés! Ya miré todos los gatitos y elegí ${lugar}. ¡Prepárate porque me emocioné muchísimo! 🐾🎉`);
+            window.open(`https://wa.me/${numeroAndres}?text=${mensaje}`, '_blank');
+        }
+    </script>
+</body>
+</html>
